@@ -44,113 +44,113 @@ static char _C2I[256] = {
 };
 
 int base45_encode(char * dst, size_t *_max_dst_len, const unsigned char * src, size_t src_len) {
-  size_t out_len = 0, max_dst_len;
-  max_dst_len = _max_dst_len ? *_max_dst_len : src_len * 4;
-  int i;
+	size_t out_len = 0, max_dst_len;
+	max_dst_len = _max_dst_len ? *_max_dst_len : src_len * 4;
+	int i;
 
-  for(i = 0; i < src_len; i+=2) {
-     if (src_len - i > 1) {
-        int x = ((src[i])<<8) + src[i+1];
+	for(i = 0; i < src_len; i+=2) {
+		if (src_len - i > 1) {
+			int x = ((src[i])<<8) + src[i+1];
 
-        unsigned char e = x / (45 * 45);
-        x %= 45 * 45;
-        unsigned char d = x / 45;
-        unsigned char c = x % 45;
+			unsigned char e = x / (45 * 45);
+			x %= 45 * 45;
+			unsigned char d = x / 45;
+			unsigned char c = x % 45;
 
-	if (out_len < max_dst_len && dst) {
-		dst[ out_len ] = BASE45_CHARSET[c];
+			if (out_len < max_dst_len && dst) {
+				dst[ out_len ] = BASE45_CHARSET[c];
+			}
+			out_len++;
+			if (out_len < max_dst_len && dst) {
+				dst[ out_len ] = BASE45_CHARSET[d];
+			}
+			out_len++;
+			if (out_len < max_dst_len && dst) {
+				dst[ out_len ] = BASE45_CHARSET[e];
+			}
+			out_len++;
+		} else {
+			int x = src[i];
+			unsigned char d = x / 45;
+			unsigned char c = x % 45;
+
+			if (out_len < max_dst_len && dst) {
+				dst[ out_len ] = BASE45_CHARSET[c];
+			}
+			out_len++;
+
+			if (out_len < max_dst_len && dst) {
+				dst[ out_len ] = BASE45_CHARSET[d];
+			}
+			out_len++;
+		 }
 	}
-	out_len++;
+	/* Same non guarantee as strncpy et.al. */
 	if (out_len < max_dst_len && dst) {
-		dst[ out_len ] = BASE45_CHARSET[d];
+		dst[ out_len ] = 0;
 	}
-	out_len++;
-	if (out_len < max_dst_len && dst) {
-		dst[ out_len ] = BASE45_CHARSET[e];
-	}
-	out_len++;
-     } else {
-        int x = src[i];
-        unsigned char d = x / 45;
-        unsigned char c = x % 45;
 
-	if (out_len < max_dst_len && dst) {
-		dst[ out_len ] = BASE45_CHARSET[c];
+	if (_max_dst_len) {
+		*_max_dst_len = out_len;
 	}
-	out_len++;
-
-	if (out_len < max_dst_len && dst) {
-		dst[ out_len ] = BASE45_CHARSET[d];
-	}
-	out_len++;
-     }
-  }
-  /* Same non guarantee as strncpy et.al. */
-  if (out_len < max_dst_len && dst) {
-	dst[ out_len ] = 0;
-  }
-
-  if (_max_dst_len) {
-	*_max_dst_len = out_len;
-  }
-  return 0;
+	return 0;
 }
 
 int base45_decode(unsigned char * dst, size_t * _max_dst_len, const char * src, size_t src_len) {
-  size_t out_len = 0, max_dst_len;
-  max_dst_len = _max_dst_len  ? *_max_dst_len : src_len;
-  int i;
+	size_t out_len = 0, max_dst_len;
+	max_dst_len = _max_dst_len	? *_max_dst_len : src_len;
+	int i;
 
-  if (dst == NULL && _max_dst_len == NULL) {
-	return -2;
-  }
+	if (dst == NULL && _max_dst_len == NULL) {
+		return -2;
+	}
 
-  if (src == NULL) {
-	return -2;
-  }
+	if (src == NULL) {
+		return -2;
+	}
 
-  if (src_len == 0) {
-	src_len = strlen(src);
-  }
+	if (src_len == 0) {
+		src_len = strlen(src);
+	}
 
-  for(i = 0; i < src_len; i+=3) {
-     int x,a,b;
+	for(i = 0; i < src_len; i+=3) {
+		 int x,a,b;
 
-     if (src_len - i < 2) {
-	return -1;
-     }
+		 if (src_len - i < 2) {
+			return -1;
+		 }
 
-     if ((255 == (a = _C2I[(unsigned char)src[i]])) || (255 == (b = _C2I[(unsigned char)src[i+1]]))) {
-	return -1;
-     }
+		 if ((255 == (a = _C2I[(unsigned char)src[i]])) || (255 == (b = _C2I[(unsigned char)src[i+1]]))) {
+			return -1;
+		 }
 
-     x = a + 45 * b;
+		 x = a + 45 * b;
 
-     if (src_len - i >= 3) {
-        if (255 == (a = _C2I[(unsigned char)src[i+2]])) {
-	    return -1;
-        }
+		 if (src_len - i >= 3) {
+			if (255 == (a = _C2I[(unsigned char)src[i+2]])) {
+				return -1;
+			}
 
-        x += a * 45 * 45;
+			x += a * 45 * 45;
 
-        if (out_len < max_dst_len && dst) {
-        	dst[out_len] = x / 256;
-        }
-        out_len++;
-	x %= 256;
-    };
+			if (out_len < max_dst_len && dst) {
+				dst[out_len] = x / 256;
+			}
+			out_len++;
+			x %= 256;
+		};
 
-    if (out_len < max_dst_len && dst) {
-        dst[out_len] = x;
-    }
+		if (out_len < max_dst_len && dst) {
+			dst[out_len] = x;
+		}
 
-    out_len++;
-  };
-  if (_max_dst_len) {
-	*_max_dst_len = out_len;
-  }
+		out_len++;
+	};
+	if (_max_dst_len) {
+		*_max_dst_len = out_len;
+	}
 
-  return 0;
+	return 0;
 }
 
 #ifdef BASE45_UTIL
@@ -161,7 +161,7 @@ int main(int argc, char ** argv) {
 	FILE * in = stdin;
 	FILE * out = stdout;
 	int decode = 0;
-	int at  = 1;
+	int at = 1;
 
 	if (argc > 1 && argv[at][0] == '-') {
 		if (argv[at][1] == 'd') {
@@ -193,9 +193,9 @@ int main(int argc, char ** argv) {
 	for(i = 0; i < 45; i++) assert(i ==  _C2I[BASE45_CHARSET[i]]);
 #endif
 
-        while(!feof(in)) {
-        	unsigned char buff[       3 * 1024 ]; // multiple chosen to allow continuation.
-        	unsigned char outbuf[ 3 * 3 * 1024 ];
+	while(!feof(in)) {
+		unsigned char buff[       3 * 1024 ]; // multiple chosen to allow continuation.
+		unsigned char outbuf[ 3 * 3 * 1024 ];
 		size_t olen = sizeof(outbuf);
 		size_t len = fread(buff, 1, 3 * 1024, in);
 
